@@ -13,12 +13,11 @@ from pyhmmer.plan7 import HMM, HMMFile
 
 QUERIES_DIR = Path(sys.argv[1])
 OUT_FILE = Path(sys.argv[2])
-GENOMES = sys.argv[3:]
+WORKERS = int(sys.argv[3])
+TOP_HITS = sys.argv[4] == "True"  # Include Top Hits Object
+GENOMES = sys.argv[5:]
 
 GENOME_REGEX = re.compile(r"(GCF_\d+\.\d)\.faa$")
-
-WORKERS = 12
-TOP_HITS = False  # Include Top Hits Object
 
 
 class HMMFiles(Iterable[HMM]):
