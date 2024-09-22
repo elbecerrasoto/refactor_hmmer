@@ -62,7 +62,7 @@ def parse_hit(hit):
 
 def run_genome(genome_path, hmms_files):
 
-    genome_id = parse_genome(genome)
+    genome_id = parse_genome(genome_path)
 
     out = {}
     out[genome_id] = {"tsv": None, "top_hits": None}
@@ -90,7 +90,6 @@ def run_genome(genome_path, hmms_files):
 
 if __name__ == "__main__":
 
-
     hmms_files = get_hmms(QUERIES_DIR)
     worker = partial(run_genome, hmms_files=hmms_files)
 
@@ -100,7 +99,7 @@ if __name__ == "__main__":
     # merge dictionaries
     merged = {}
     for resultD in results:
-        merged = merged | resultD
+        merged |= resultD
 
     # write down tsv
     with open(OUT_FILE, "w") as tsv:
@@ -109,7 +108,3 @@ if __name__ == "__main__":
 
             for hit in hits:
                 tsv.write(hit)
-
-        for genome in OUT:
-            for hit_data in OUT[genome]:
-                tsv.write(hit_data)
