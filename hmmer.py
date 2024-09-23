@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable, Union
 from functools import partial
 from multiprocessing import Pool, cpu_count
+from contextlib import ExitStack
 
 from pyhmmer import hmmsearch
 from pyhmmer.easel import SequenceFile
@@ -72,18 +73,28 @@ def parse_hit(hit):
 
 def run_genomes(genome_paths, hmms_files):
 
-    def run_genome(genome_path):
-        genome_id = parse_genome(genome_path)
+    genomes_ids = list(map(parse_genome, genome_paths))
+
+    with ExitStack() as stack:
+        genomes_files = [
+            stack.enter_context(SequenceFile(genome_path, digital=True))
+            for genome_path in genome_paths
+        ]
+        results = []
+        for genome_file in genomes_files:
+            genome = genome_file.read_block()
+            results.append(hmmsearch(hmms_files, genome))
+
+    merged = {}
+    for idx, result in enumerate(results):
+
+        genome_id = genomes_ids[idx]
 
         out = {}
         out[genome_id] = {"tsv": None, "top_hits": None}
 
-        with SequenceFile(genome_path, digital=True) as genome_file:
-            genome = genome_file.read_block()
-            results = hmmsearch(hmms_files, genome)
-
         tsv = []
-        for top_hits in results:
+        for top_hits in result:
             for hit in top_hits:
                 parsed = parse_hit(hit)
                 hit_tsv = f"{genome_id}\t{parsed}"
@@ -92,15 +103,11 @@ def run_genomes(genome_paths, hmms_files):
         if TOP_HITS:
             out[genome_id]["top_hits"] = results
         else:
-            del results
+            del result
 
         out[genome_id]["tsv"] = tsv
 
-        return out
-
-    merged = {}
-    for resultD in map(run_genome, genome_paths):
-        merged |= resultD
+        merged |= out
 
     return merged
 
