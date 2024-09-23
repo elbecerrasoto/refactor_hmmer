@@ -12,19 +12,21 @@ from pyhmmer import hmmsearch
 from pyhmmer.easel import SequenceFile
 from pyhmmer.plan7 import HMM, HMMFile
 
-# QUERIES_DIR = Path(sys.argv[1])
-# OUT_FILE = Path(sys.argv[2])
-# BATCH = int(Path(sys.argv[3]))
-# WORKERS = int(float(sys.argv[4]) * cpu_count())
-# TOP_HITS = sys.argv[5] == "True"  # Include Top Hits Object
-# PATHS_FILE = sys.argv[6]
+QUERIES_DIR = Path(sys.argv[1])
+OUT_FILE = Path(sys.argv[2])
+BATCH_SIZE = int(sys.argv[3])
+WORKERS = int(float(sys.argv[4]) * cpu_count())
+TOP_HITS = sys.argv[5] == "True"  # Include Top Hits Object
+GENOMES_FILE = sys.argv[6]
 
-QUERIES_DIR = Path("queries")
-OUT_FILE = Path("test0.tsv")
-BATCH_SIZE = 512
-WORKERS = int(2 * cpu_count())
-TOP_HITS = False  # Include Top Hits Object
-GENOMES_FILE = Path("genomes.txt")
+CHUNKSIZE = WORKERS
+
+# QUERIES_DIR = Path("queries")
+# OUT_FILE = Path("test0.tsv")
+# BATCH_SIZE = 512
+# WORKERS = int(2 * cpu_count())
+# TOP_HITS = False  # Include Top Hits Object
+# GENOMES_FILE = Path("genomes.txt")
 
 GENOME_REGEX = re.compile(r"(GCF_\d+\.\d)\.faa$")
 
@@ -113,7 +115,7 @@ if __name__ == "__main__":
     worker = partial(run_genomes, hmms_files=hmms_files)
 
     with Pool(WORKERS) as pool:
-        results = pool.imap_unordered(worker, batches)
+        results = pool.imap_unordered(worker, batches, chunksize=CHUNKSIZE)
         pool.close()
         pool.join()
 
