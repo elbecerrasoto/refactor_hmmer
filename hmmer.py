@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 from typing import Iterable, Union
 from functools import partial
-from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 
 from pyhmmer import hmmsearch
 from pyhmmer.easel import SequenceFile
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     hmms_files = get_hmms(QUERIES_DIR)
     worker = partial(run_genomes, hmms_files=hmms_files)
 
-    with Pool(WORKERS) as pool:
+    with ThreadPool(WORKERS) as pool:
         results = pool.imap_unordered(worker, batches, chunksize=CHUNKSIZE)
         pool.close()
         pool.join()
