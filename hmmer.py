@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 from typing import Iterable, Union
 from functools import partial
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
 from pyhmmer import hmmsearch
 from pyhmmer.easel import SequenceFile
@@ -15,18 +15,11 @@ from pyhmmer.plan7 import HMM, HMMFile
 QUERIES_DIR = Path(sys.argv[1])
 OUT_FILE = Path(sys.argv[2])
 BATCH_SIZE = int(sys.argv[3])
-WORKERS = int(float(sys.argv[4]) * cpu_count())
-TOP_HITS = sys.argv[5] == "True"  # Include Top Hits Object
-GENOMES_FILE = sys.argv[6]
+WORKERS = int(sys.argv[4])
+CHUNKSIZE = int(sys.argv[5])
+TOP_HITS = sys.argv[6] == "True"  # Include Top Hits Object
+GENOMES_FILE = sys.argv[7]
 
-CHUNKSIZE = WORKERS
-
-# QUERIES_DIR = Path("queries")
-# OUT_FILE = Path("test0.tsv")
-# BATCH_SIZE = 512
-# WORKERS = int(2 * cpu_count())
-# TOP_HITS = False  # Include Top Hits Object
-# GENOMES_FILE = Path("genomes.txt")
 
 GENOME_REGEX = re.compile(r"(GCF_\d+\.\d)\.faa$")
 
