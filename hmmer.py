@@ -80,9 +80,11 @@ def run_genomes(genome_paths, hmms_files):
             stack.enter_context(SequenceFile(genome_path, digital=True))
             for genome_path in genome_paths
         ]
+
         results = []
-        for genome_file in genomes_files:
-            genome = genome_file.read_block()
+        genomes = [g.read_block() for g in genomes_files]
+
+        for genome in genomes:
             results.append(hmmsearch(hmms_files, genome))
 
     merged = {}
