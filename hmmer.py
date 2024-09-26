@@ -51,6 +51,7 @@ def parse_hit(hit):
         (pid := hit.name.decode("utf-8")),
         (query := hit.hits.query_accession.decode("utf-8")),
         (score := hit.score),
+        (evalue := hit.evalue),
         (start := hit.best_domain.env_from),
         (end := hit.best_domain.env_to),
         (included := hit.included),
