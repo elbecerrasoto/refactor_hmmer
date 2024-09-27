@@ -69,11 +69,10 @@ def run_genomes(genome_paths, hmms_files):
         tsv = []
         for top_hits in results:
             for hit in top_hits:
-                parsed = parse_hit(hit)
-                hit_tsv = f"{genome_id}\t{parsed}"
-                tsv.append(hit_tsv)
-
-        del results
+                if hit.included:
+                    parsed = parse_hit(hit)
+                    hit_tsv = f"{genome_id}\t{parsed}"
+                    tsv.append(hit_tsv)
 
         out = {}
         out[genome_id] = tsv
