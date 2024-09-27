@@ -64,7 +64,7 @@ def run_genomes(genome_paths, hmms_files):
 
         with SequenceFile(genome_path, digital=True) as genome_file:
             genome = genome_file.read_block()
-            results = hmmsearch(hmms_files, genome)
+            results = hmmsearch(hmms_files, genome, bit_cutoffs="trusted")
 
         tsv = []
         for top_hits in results:
