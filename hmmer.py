@@ -14,7 +14,7 @@ from pyhmmer.plan7 import HMM, HMMFile
 
 QUERIES_DIR = Path(sys.argv[1])
 OUT_FILE = Path(sys.argv[2])
-BATCH_SIZE = int(sys.argv[3])
+NBATCHES = int(sys.argv[3])
 WORKERS = int(sys.argv[4])
 CHUNKSIZE = int(sys.argv[5])
 TOP_HITS = sys.argv[6] == "True"  # Include Top Hits Object
@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     with open(GENOMES_FILE, "r") as genomes_file:
         genomes_paths = [Path(line.rstrip()) for line in genomes_file]
-        batches = np.array_split(np.array(genomes_paths), BATCH_SIZE)
+        batches = np.array_split(np.array(genomes_paths), NBATCHES)
 
     hmms_files = get_hmms(QUERIES_DIR)
     worker = partial(run_genomes, hmms_files=hmms_files)
