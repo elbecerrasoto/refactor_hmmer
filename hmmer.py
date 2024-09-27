@@ -13,15 +13,10 @@ from pyhmmer.easel import SequenceFile
 from pyhmmer.plan7 import HMM, HMMFile
 
 QUERIES_DIR = Path(sys.argv[1])
-OUT_FILE = Path(sys.argv[2])
-NBATCHES = int(sys.argv[3])
-WORKERS = int(sys.argv[4])
-CHUNKSIZE = int(sys.argv[5])
-TOP_HITS = sys.argv[6] == "True"  # Include Top Hits Object
-GENOMES_FILE = sys.argv[7]
+GENOMES_FILE = sys.argv[2]
+OUT_FILE = Path(sys.argv[3])
 
-
-GENOME_REGEX = re.compile(r"(GCF_\d+\.\d)\.faa$")
+GENOME_REGEX = re.compile(r"(GC[FA]_\d+\.\d)\.faa$")
 
 
 class HMMFiles(Iterable[HMM]):
@@ -54,8 +49,6 @@ def parse_hit(hit):
         (evalue := hit.evalue),
         (start := hit.best_domain.env_from),
         (end := hit.best_domain.env_to),
-        (included := hit.included),
-        (reported := hit.reported),
         (pid_description := hit.description.decode("utf-8")),
         (query_description := hit.hits.query_name.decode("utf-8")),
     ]
@@ -69,9 +62,6 @@ def run_genomes(genome_paths, hmms_files):
     def run_genome(genome_path):
         genome_id = parse_genome(genome_path)
 
-        out = {}
-        out[genome_id] = {"tsv": None, "top_hits": None}
-
         with SequenceFile(genome_path, digital=True) as genome_file:
             genome = genome_file.read_block()
             results = hmmsearch(hmms_files, genome)
@@ -83,12 +73,10 @@ def run_genomes(genome_paths, hmms_files):
                 hit_tsv = f"{genome_id}\t{parsed}"
                 tsv.append(hit_tsv)
 
-        if TOP_HITS:
-            out[genome_id]["top_hits"] = results
-        else:
-            del results
+        del results
 
-        out[genome_id]["tsv"] = tsv
+        out = {}
+        out[genome_id] = tsv
 
         return out
 
@@ -103,25 +91,23 @@ if __name__ == "__main__":
 
     with open(GENOMES_FILE, "r") as genomes_file:
         genomes_paths = [Path(line.rstrip()) for line in genomes_file]
-        batches = np.array_split(np.array(genomes_paths), NBATCHES)
+        n_batches = len(genomes_paths)
+        batches = np.array_split(np.array(genomes_paths), n_batches)
 
     hmms_files = get_hmms(QUERIES_DIR)
     worker = partial(run_genomes, hmms_files=hmms_files)
 
-    with Pool(WORKERS) as pool:
-        results = pool.imap_unordered(worker, batches, chunksize=CHUNKSIZE)
+    with Pool() as pool:
+        results = pool.imap_unordered(worker, batches)
         pool.close()
         pool.join()
 
-    # merge dictionaries
     merged = {}
-    for resultD in results:
-        merged |= resultD
+    for result in results:
+        merged |= result
 
-    # write down tsv
     with open(OUT_FILE, "w") as tsv:
         for genome_id in merged:
-            hits = merged[genome_id]["tsv"]
-
-            for hit in hits:
+            top_hits = merged[genome_id]
+            for hit in top_hits:
                 tsv.write(hit)
